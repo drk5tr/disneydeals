@@ -22,6 +22,7 @@ from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 # ---------------------------------------------------------------------------
 # CONFIG — the defaults match your request; override via env vars if needed.
@@ -213,14 +214,33 @@ def save_state(state: dict) -> None:
     STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
+def fetch_rendered_html(url: str) -> str:
+    """Render the SPA in headless Chromium and return the DOM after offers load."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        ctx = browser.new_context(user_agent=HEADERS["User-Agent"])
+        page = ctx.new_page()
+        page.goto(url, wait_until="domcontentloaded", timeout=60_000)
+        # Offers anchor every <a> tag to /special-offers/<slug>; wait until at
+        # least one such link is present before grabbing the DOM.
+        page.wait_for_selector(
+            'a[href*="/special-offers/"][href$="/"]',
+            timeout=45_000,
+        )
+        # Small settle so late-rendered cards land in the DOM.
+        page.wait_for_timeout(2000)
+        html = page.content()
+        browser.close()
+        return html
+
+
 def main() -> int:
     baseline = not STATE_FILE.exists()
     prev = load_state()
 
     try:
-        resp = requests.get(URL, headers=HEADERS, timeout=TIMEOUT)
-        resp.raise_for_status()
-        offers = evaluate(extract_offers(resp.text))
+        html = fetch_rendered_html(URL)
+        offers = evaluate(extract_offers(html))
     except Exception as e:
         print(f"[warn] fetch/parse failed, skipping run: {e}", file=sys.stderr)
         return 0
