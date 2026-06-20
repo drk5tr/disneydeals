@@ -244,29 +244,28 @@ def fetch_rendered_html(url: str) -> str:
         ctx.add_init_script(_STEALTH_JS)
         page = ctx.new_page()
         page.goto(url, wait_until="commit", timeout=60_000)
-        # Wait for Angular to populate <app-root>. Once that has children,
-        # the SPA has bootstrapped and the offer cards should follow.
-        try:
-            page.wait_for_function(
-                "document.querySelector('app-root')?.children.length > 0",
-                timeout=60_000,
+        # Wait for at least one offer-detail link to land in the DOM, polling
+        # ourselves (more reliable than wait_for_selector for asynchronously
+        # injected Angular content). Offer slugs look like /special-offers/<slug>/
+        # with non-empty slug — exclude the listing page itself and login redirects.
+        deadline = dt.datetime.now() + dt.timedelta(seconds=90)
+        while dt.datetime.now() < deadline:
+            count = page.evaluate(
+                """() => Array.from(document.querySelectorAll('a'))
+                    .map(a => a.href)
+                    .filter(h => /\\/special-offers\\/[a-z0-9][a-z0-9-]+\\/?$/i.test(h))
+                    .length"""
             )
-            # Then wait specifically for offer cards (any anchor pointing at a
-            # /special-offers/<slug> detail page).
-            page.wait_for_selector(
-                'a[href*="/special-offers/"]',
-                timeout=30_000,
-            )
-        except Exception as e:
+            if count > 0:
+                break
+            page.wait_for_timeout(1500)
+        else:
             title = page.title() or "(no title)"
-            html = page.content()
-            offer_links = page.eval_on_selector_all(
-                "a", "els => els.map(e => e.href).filter(h => h.includes('special-offers')).slice(0,5)"
-            )
-            print(f"[debug] selector timed out. title={title!r}, html_len={len(html)}, "
-                  f"offer_links_found={offer_links}", file=sys.stderr)
+            print(f"[debug] no offer links after 90s. title={title!r}",
+                  file=sys.stderr)
             browser.close()
-            raise e
+            raise RuntimeError("offer links never rendered")
+        # Settle for any late cards.
         page.wait_for_timeout(3000)
         html = page.content()
         browser.close()
