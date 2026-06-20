@@ -1,0 +1,22 @@
+{
+  "summer-2026-disney-plus-room-offer": {
+    "qualifies": false,
+    "dates": "2026-06-21\u20132026-08-15",
+    "title": "Disney+ Perks Members: Special Summer Room Offer"
+  },
+  "early-summer-2026-room-offer": {
+    "qualifies": false,
+    "dates": "2026-05-01\u20132026-07-29",
+    "title": "Save Up to 30% on Rooms This Summer"
+  },
+  "passholder-early-summer-2026-room-offer": {
+    "qualifies": false,
+    "dates": "2026-05-01\u20132026-07-29",
+    "title": "Annual Passholders: Save Up to 40% on Rooms This Summer"
+  },
+  "passholder-summer-2026-room-offer": {
+    "qualifies": false,
+    "dates": "2026-07-30\u20132026-10-03",
+    "title": "Annual Passholders: Save Up to 40% on Rooms in Late Summer & Early Fall"
+  }
+}
