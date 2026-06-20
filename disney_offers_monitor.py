@@ -39,7 +39,10 @@ WINDOW_END = os.environ.get("MONITOR_WINDOW_END") or "10-30"
 # Aulani is in Hawaii, not Walt Disney World — drop it by default.
 EXCLUDE_KEYWORDS = [
     k.strip().lower()
-    for k in (os.environ.get("MONITOR_EXCLUDE") or "Aulani").split(",")
+    for k in (
+        os.environ.get("MONITOR_EXCLUDE")
+        or "Aulani,Military,Dining,DVC,Disney Vacation Club,Tickets"
+    ).split(",")
     if k.strip()
 ]
 
@@ -171,19 +174,26 @@ def extract_offers(html: str) -> dict:
 
 
 def evaluate(offers: dict) -> dict:
-    """Annotate each offer with qualifies(bool/None) and a dates summary."""
+    """Annotate each offer with qualifies(bool) and a dates summary.
+
+    An offer qualifies only when ALL of:
+      - none of the EXCLUDE_KEYWORDS appear in title/body,
+      - the card is tagged 'Offer Type: Room' (Disney's own category label),
+      - parsed travel dates exist AND overlap the target window.
+    Unparseable dates do not qualify (strict mode).
+    """
     out = {}
     for slug, info in offers.items():
         blob = f"{info['title']} {info['text']}".lower()
         if any(k in blob for k in EXCLUDE_KEYWORDS):
-            continue  # excluded entirely
+            continue
+        if "offer type: room" not in blob:
+            continue
         ranges = parse_ranges(info["text"])
-        ov = overlaps_window(ranges)
-        # Bias toward alerting: unknown dates (None) are treated as qualifying.
-        qualifies = True if ov is None else ov
+        qualifies = bool(overlaps_window(ranges))
         dates = (
             ", ".join(f"{s.isoformat()}–{e.isoformat()}" for s, e in ranges)
-            if ranges else "dates not parsed (verify manually)"
+            if ranges else "dates not parsed"
         )
         out[slug] = {**info, "qualifies": qualifies, "dates": dates}
     return out
