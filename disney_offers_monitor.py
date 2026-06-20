@@ -217,8 +217,17 @@ def save_state(state: dict) -> None:
 def fetch_rendered_html(url: str) -> str:
     """Render the SPA in headless Chromium and return the DOM after offers load."""
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        ctx = browser.new_context(user_agent=HEADERS["User-Agent"])
+        # Disney's edge throws HTTP/2 protocol errors at headless Chromium;
+        # forcing HTTP/1.1 sidesteps it.
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--disable-http2", "--disable-blink-features=AutomationControlled"],
+        )
+        ctx = browser.new_context(
+            user_agent=HEADERS["User-Agent"],
+            viewport={"width": 1280, "height": 900},
+            locale="en-US",
+        )
         page = ctx.new_page()
         page.goto(url, wait_until="domcontentloaded", timeout=60_000)
         # Offers anchor every <a> tag to /special-offers/<slug>; wait until at
