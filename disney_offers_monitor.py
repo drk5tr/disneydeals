@@ -29,10 +29,10 @@ from bs4 import BeautifulSoup
 URL = os.environ.get("MONITOR_URL", "https://disneyworld.disney.go.com/special-offers/")
 SITE_ROOT = "https://disneyworld.disney.go.com"
 
-YEAR = int(os.environ.get("MONITOR_YEAR", "2026"))
+YEAR = int(os.environ.get("MONITOR_YEAR") or "2026")
 # Target travel window (inclusive). Format: MM-DD.
-WINDOW_START = os.environ.get("MONITOR_WINDOW_START", "10-15")
-WINDOW_END = os.environ.get("MONITOR_WINDOW_END", "10-30")
+WINDOW_START = os.environ.get("MONITOR_WINDOW_START") or "10-15"
+WINDOW_END = os.environ.get("MONITOR_WINDOW_END") or "10-30"
 
 # Offers containing any of these words are ignored (case-insensitive).
 # Aulani is in Hawaii, not Walt Disney World — drop it by default.
