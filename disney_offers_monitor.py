@@ -226,19 +226,14 @@ window.chrome = {runtime: {}};
 def fetch_rendered_html(url: str) -> str:
     """Render the SPA in headless Chromium and return the DOM after offers load."""
     with sync_playwright() as p:
-        # Disney's edge throws HTTP/2 protocol errors at headless Chromium and
-        # also fingerprints automation; force HTTP/1.1 and apply basic stealth.
-        browser = p.chromium.launch(
-            headless=True,
-            args=[
-                "--disable-http2",
-                "--disable-quic",
-                "--disable-blink-features=AutomationControlled",
-                "--no-sandbox",
-            ],
-        )
+        # Disney's Akamai edge blocks headless Chromium at the TLS layer.
+        # Firefox has a different TLS fingerprint that passes through.
+        browser = p.firefox.launch(headless=True)
         ctx = browser.new_context(
-            user_agent=HEADERS["User-Agent"],
+            user_agent=(
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) "
+                "Gecko/20100101 Firefox/128.0"
+            ),
             viewport={"width": 1280, "height": 900},
             locale="en-US",
             extra_http_headers={
@@ -248,7 +243,7 @@ def fetch_rendered_html(url: str) -> str:
         )
         ctx.add_init_script(_STEALTH_JS)
         page = ctx.new_page()
-        page.goto(url, wait_until="commit", timeout=90_000)
+        page.goto(url, wait_until="commit", timeout=60_000)
         page.wait_for_selector(
             'a[href*="/special-offers/"][href$="/"]',
             timeout=60_000,
