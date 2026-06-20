@@ -229,15 +229,15 @@ def fetch_rendered_html(url: str) -> str:
             locale="en-US",
         )
         page = ctx.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=60_000)
+        page.goto(url, wait_until="commit", timeout=60_000)
         # Offers anchor every <a> tag to /special-offers/<slug>; wait until at
         # least one such link is present before grabbing the DOM.
         page.wait_for_selector(
             'a[href*="/special-offers/"][href$="/"]',
-            timeout=45_000,
+            timeout=60_000,
         )
         # Small settle so late-rendered cards land in the DOM.
-        page.wait_for_timeout(2000)
+        page.wait_for_timeout(2500)
         html = page.content()
         browser.close()
         return html
