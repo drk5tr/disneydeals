@@ -39,7 +39,7 @@ WINDOW_END = os.environ.get("MONITOR_WINDOW_END") or "10-30"
 # Aulani is in Hawaii, not Walt Disney World — drop it by default.
 EXCLUDE_KEYWORDS = [
     k.strip().lower()
-    for k in os.environ.get("MONITOR_EXCLUDE", "Aulani").split(",")
+    for k in (os.environ.get("MONITOR_EXCLUDE") or "Aulani").split(",")
     if k.strip()
 ]
 
