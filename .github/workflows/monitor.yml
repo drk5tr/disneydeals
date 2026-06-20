@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: disney-offers-monitor
@@ -39,3 +40,10 @@ jobs:
             git commit -m "update offer state [skip ci]"
             git push
           fi
+      - name: Disable workflow after first alert
+        if: hashFiles('.notified') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Alert fired — disabling workflow so it stops running."
+          gh workflow disable disney-offers-monitor --repo "$GITHUB_REPOSITORY"

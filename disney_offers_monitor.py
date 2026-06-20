@@ -320,6 +320,8 @@ def main() -> int:
                 + "\n\n".join(lines))
         notify(f"Disney deal for your dates ({len(fresh)})", body, fresh[0]["url"])
         print("[info] notified.")
+        # Marker file the workflow uses to auto-disable itself after firing once.
+        Path(".notified").write_text("1")
     else:
         print("[info] nothing new for your window.")
 
