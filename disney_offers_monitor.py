@@ -214,29 +214,45 @@ def save_state(state: dict) -> None:
     STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
+_STEALTH_JS = """
+// Hide signals Akamai-style bot detection looks for.
+Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
+Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
+window.chrome = {runtime: {}};
+"""
+
+
 def fetch_rendered_html(url: str) -> str:
     """Render the SPA in headless Chromium and return the DOM after offers load."""
     with sync_playwright() as p:
-        # Disney's edge throws HTTP/2 protocol errors at headless Chromium;
-        # forcing HTTP/1.1 sidesteps it.
+        # Disney's edge throws HTTP/2 protocol errors at headless Chromium and
+        # also fingerprints automation; force HTTP/1.1 and apply basic stealth.
         browser = p.chromium.launch(
             headless=True,
-            args=["--disable-http2", "--disable-blink-features=AutomationControlled"],
+            args=[
+                "--disable-http2",
+                "--disable-quic",
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+            ],
         )
         ctx = browser.new_context(
             user_agent=HEADERS["User-Agent"],
             viewport={"width": 1280, "height": 900},
             locale="en-US",
+            extra_http_headers={
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            },
         )
+        ctx.add_init_script(_STEALTH_JS)
         page = ctx.new_page()
-        page.goto(url, wait_until="commit", timeout=60_000)
-        # Offers anchor every <a> tag to /special-offers/<slug>; wait until at
-        # least one such link is present before grabbing the DOM.
+        page.goto(url, wait_until="commit", timeout=90_000)
         page.wait_for_selector(
             'a[href*="/special-offers/"][href$="/"]',
             timeout=60_000,
         )
-        # Small settle so late-rendered cards land in the DOM.
         page.wait_for_timeout(2500)
         html = page.content()
         browser.close()
