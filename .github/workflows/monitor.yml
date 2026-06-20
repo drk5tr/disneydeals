@@ -2,7 +2,7 @@ name: disney-offers-monitor
 
 on:
   schedule:
-    - cron: "0 8,20 * * *"
+    - cron: "0 2,14 * * *"
   workflow_dispatch:
 
 permissions:
