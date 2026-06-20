@@ -244,10 +244,22 @@ def fetch_rendered_html(url: str) -> str:
         ctx.add_init_script(_STEALTH_JS)
         page = ctx.new_page()
         page.goto(url, wait_until="commit", timeout=60_000)
-        page.wait_for_selector(
-            'a[href*="/special-offers/"][href$="/"]',
-            timeout=60_000,
-        )
+        try:
+            page.wait_for_selector(
+                'a[href*="/special-offers/"][href$="/"]',
+                timeout=60_000,
+            )
+        except Exception as e:
+            # Dump diagnostics before giving up so we can see what we got.
+            title = page.title() or "(no title)"
+            html = page.content()
+            print(f"[debug] selector timed out. title={title!r}, html_len={len(html)}",
+                  file=sys.stderr)
+            # Save first 4 KB of body for inspection.
+            snippet = re.sub(r"\s+", " ", html)[:4000]
+            print(f"[debug] snippet: {snippet}", file=sys.stderr)
+            browser.close()
+            raise e
         page.wait_for_timeout(2500)
         html = page.content()
         browser.close()
