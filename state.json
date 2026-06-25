@@ -1,4 +1,14 @@
 {
+  "2026-holiday-room-offer": {
+    "qualifies": true,
+    "dates": "2026-10-04\u20132026-12-24",
+    "title": "Save Up to 20% on Rooms This Holiday Season"
+  },
+  "2026-disney-plus-package-offer": {
+    "qualifies": true,
+    "dates": "2026-09-25\u20132026-12-24",
+    "title": "Disney+ Perks Members: Save on Select Packages This Holiday Season"
+  },
   "early-summer-2026-room-offer": {
     "qualifies": false,
     "dates": "2026-05-01\u20132026-07-29",
@@ -13,5 +23,10 @@
     "qualifies": false,
     "dates": "2026-07-30\u20132026-10-03",
     "title": "Annual Passholders: Save Up to 40% on Rooms in Late Summer & Early Fall"
+  },
+  "passholder-holiday-2026-room-offer": {
+    "qualifies": true,
+    "dates": "2026-10-04\u20132026-12-24",
+    "title": "Annual Passholders: Save Up to 30% on Rooms This Holiday Season"
   }
 }
